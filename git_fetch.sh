@@ -8,6 +8,6 @@ if [ $LOCAL = $REMOTE ]; then
 else
     echo "Need update"
     git pull
-    /bin/cp -rf /root/start/start.sh /root/start/test/
-    chmod +x /root/start/test/start.sh
+    /bin/cp -rf /root/start/start.sh /root/saturn/
+    chmod +x /root/saturn/start.sh
 fi
