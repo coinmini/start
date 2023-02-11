@@ -1,6 +1,6 @@
 #!/bin/bash
 set -eou pipefail
-#sed -i "s@/proc/meminfo@/tmp/meminfo@g" /usr/src/app/src/utils/system.js
+sed -i "s@/proc/meminfo@/tmp/meminfo@g" /usr/src/app/src/utils/system.js
 
 # patch DNS to use the ones the host passed to docker
 # we grab the top two, so we don't potentially load balance over a ton of resolvers
