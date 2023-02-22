@@ -2,6 +2,7 @@
 set -eou pipefail
 sed -i "s@/proc/meminfo@/tmp/meminfo@g" /usr/src/app/src/utils/system.js
 
+
 # patch DNS to use the ones the host passed to docker
 # we grab the top two, so we don't potentially load balance over a ton of resolvers
 # IPv4 regexp ref - https://www.shellhacks.com/regex-find-ip-addresses-file-grep/
@@ -44,7 +45,7 @@ if [ -n "${IPFS_GATEWAY_ORIGIN:-}" ]; then
   sed -i "s@https://ipfs.io;@$IPFS_GATEWAY_ORIGIN;@g" /etc/nginx/conf.d/shared.conf;
 fi
 
-nginx -g "daemon off;" &
+nginx
 
 export LASSIE_ORIGIN=http://127.0.0.1:7766
 
@@ -53,14 +54,32 @@ if [ "${LASSIE_ORIGIN:-}" != "" ]; then
     --event-recorder-url $LASSIE_EVENT_RECORDER_URL \
     --event-recorder-auth $LASSIE_EVENT_RECORDER_AUTH \
     --event-recorder-instance-id "$(cat /usr/src/app/shared/nodeId.txt)" \
+    --tempdir /usr/src/app/shared \
     &>/dev/null &
   LASSIE_PID=$!
 
-  exec node --max-old-space-size=2048 src/bin/shim.js &
+  node --max-old-space-size=4096 /usr/src/app/src/bin/shim.js &
   SHIM_PID=$!
 
+  _quit() {
+    kill -INT "$SHIM_PID" 2>/dev/null # trigger shutdown
+
+    wait "$SHIM_PID" # let shim exit itself
+
+    exit $?
+  }
+
+  _term() {
+    trap _quit SIGINT SIGQUIT # handle next wave of signals
+
+    kill -TERM "$SHIM_PID" 2>/dev/null # trigger deregistration
+
+    wait "$SHIM_PID" # keep shim alive while draining
+  }
+
+  trap _term SIGTERM
+
   wait -n $LASSIE_PID $SHIM_PID
-  exit $?
 else
-  exec node src/bin/shim.js
+  exec node --max-old-space-size=4096 /usr/src/app/src/bin/shim.js
 fi
