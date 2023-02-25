@@ -2,7 +2,6 @@
 set -eou pipefail
 sed -i "s@/proc/meminfo@/tmp/meminfo@g" /usr/src/app/src/utils/system.js
 
-
 # patch DNS to use the ones the host passed to docker
 # we grab the top two, so we don't potentially load balance over a ton of resolvers
 # IPv4 regexp ref - https://www.shellhacks.com/regex-find-ip-addresses-file-grep/
@@ -48,14 +47,15 @@ fi
 nginx
 
 export LASSIE_ORIGIN=http://127.0.0.1:7766
+export LASSIE_EVENT_RECORDER_INSTANCE_ID="$(cat /usr/src/app/shared/nodeId.txt)"
+export LASSIE_TEMP_DIRECTORY=/usr/src/app/shared
+export LASSIE_MAX_BLOCKS_PER_REQUEST=10000
+export LASSIE_LIBP2P_CONNECTIONS_LOWWATER=2000
+export LASSIE_LIBP2P_CONNECTIONS_HIGHWATER=3000
+export LASSIE_PORT=7766
 
 if [ "${LASSIE_ORIGIN:-}" != "" ]; then
-  lassie daemon -p 7766 \
-    --event-recorder-url $LASSIE_EVENT_RECORDER_URL \
-    --event-recorder-auth $LASSIE_EVENT_RECORDER_AUTH \
-    --event-recorder-instance-id "$(cat /usr/src/app/shared/nodeId.txt)" \
-    --tempdir /usr/src/app/shared \
-    &>/dev/null &
+  lassie daemon &>/dev/null &
   LASSIE_PID=$!
 
   node --max-old-space-size=4096 /usr/src/app/src/bin/shim.js &
