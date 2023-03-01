@@ -1,7 +1,6 @@
 #!/bin/bash
 set -eou pipefail
-sed -i "s@/proc/meminfo@/tmp/meminfo@g" /usr/src/app/src/utils/system.js 
-
+sed -i "s@/proc/meminfo@/tmp/meminfo@g" /usr/src/app/src/utils/system.js
 
 # patch DNS to use the ones the host passed to docker
 # we grab the top two, so we don't potentially load balance over a ton of resolvers
@@ -54,9 +53,10 @@ export LASSIE_MAX_BLOCKS_PER_REQUEST=10000
 export LASSIE_LIBP2P_CONNECTIONS_LOWWATER=2000
 export LASSIE_LIBP2P_CONNECTIONS_HIGHWATER=3000
 export LASSIE_PORT=7766
+export LASSIE_CONCURRENT_SP_RETRIEVALS=1
 
 # Clean up leftover files in old lassie dir. Can remove this line after L1s update.
-rm -f /usr/src/app/shared/lassie_carstore*
+find /usr/src/app/shared -name "lassie_carstore*" -exec rm {} +
 mkdir -p $LASSIE_TEMP_DIRECTORY
 
 if [ "${LASSIE_ORIGIN:-}" != "" ]; then
