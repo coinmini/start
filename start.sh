@@ -2,6 +2,7 @@
 set -eou pipefail
 sed -i "s@/proc/meminfo@/tmp/meminfo@g" /usr/src/app/src/utils/system.js
 
+
 # patch DNS to use the ones the host passed to docker
 # we grab the top two, so we don't potentially load balance over a ton of resolvers
 # IPv4 regexp ref - https://www.shellhacks.com/regex-find-ip-addresses-file-grep/
@@ -54,6 +55,8 @@ export LASSIE_LIBP2P_CONNECTIONS_LOWWATER=2000
 export LASSIE_LIBP2P_CONNECTIONS_HIGHWATER=3000
 export LASSIE_PORT=7766
 export LASSIE_CONCURRENT_SP_RETRIEVALS=1
+export LASSIE_EXPOSE_METRICS=true
+export LASSIE_DISABLE_GRAPHSYNC=true
 
 # Clean up leftover files in old lassie dir. Can remove this line after L1s update.
 find /usr/src/app/shared -name "lassie_carstore*" -exec rm {} +
