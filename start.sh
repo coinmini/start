@@ -2,7 +2,6 @@
 set -eou pipefail
 sed -i "s@/proc/meminfo@/tmp/meminfo@g" /usr/src/app/src/utils/system.js
 
-
 # patch DNS to use the ones the host passed to docker
 # we grab the top two, so we don't potentially load balance over a ton of resolvers
 # IPv4 regexp ref - https://www.shellhacks.com/regex-find-ip-addresses-file-grep/
@@ -15,7 +14,7 @@ if [ ! -f "/usr/src/app/shared/nodeId.txt" ]; then
   cat /proc/sys/kernel/random/uuid > /usr/src/app/shared/nodeId.txt
 fi
 
-echo "$(date -u) [container] Booting $NETWORK network L1 v$NODE_VERSION"
+echo "$(date -u) [container] Booting $NETWORK network L1 v$VERSION"
 echo "$(date -u) [container] ID: $(cat /usr/src/app/shared/nodeId.txt)"
 echo "$(date -u) [container] CPUs: $(nproc --all)"
 echo "$(date -u) [container] Memory: $(awk '(NR<4)' /proc/meminfo | tr -d '  ' | tr '\n' ' ')"
@@ -39,7 +38,7 @@ else
 fi
 
 sed -i "s@\$node_id@$(cat /usr/src/app/shared/nodeId.txt)@g" /etc/nginx/conf.d/shared.conf
-sed -i "s@\$node_version@$NODE_VERSION@g" /etc/nginx/conf.d/shared.conf
+sed -i "s@\$node_version@$VERSION@g" /etc/nginx/conf.d/shared.conf
 
 min_uses=2
 if [ $(df -h /usr/src/app/shared | awk '(NR>1) { printf "%d", $5}') -lt 80 ]; then
@@ -47,26 +46,27 @@ if [ $(df -h /usr/src/app/shared | awk '(NR>1) { printf "%d", $5}') -lt 80 ]; th
 fi
 sed -i "s@\$cache_min_uses@$min_uses@g" /etc/nginx/conf.d/shared.conf
 
-
 if [ -n "${IPFS_GATEWAY_ORIGIN:-}" ]; then
   sed -i "s@https://ipfs.io;@$IPFS_GATEWAY_ORIGIN;@g" /etc/nginx/conf.d/shared.conf;
 fi
 
 nginx
 
+export NODE_VERSION_HASH=$(echo -n "$VERSION_HASH$(cat /usr/src/app/shared/nodeId.txt)" | sha256sum | head -c 64)
+
 export LASSIE_PORT=7766
 export LASSIE_ORIGIN=http://127.0.0.1:$LASSIE_PORT
+export LASSIE_SP_ELIGIBLE_PORTION=0.0
 export LASSIE_EVENT_RECORDER_INSTANCE_ID="$(cat /usr/src/app/shared/nodeId.txt)"
 export LASSIE_TEMP_DIRECTORY=/usr/src/app/shared/lassie
-export LASSIE_MAX_BLOCKS_PER_REQUEST=10
+export LASSIE_MAX_BLOCKS_PER_REQUEST=10000
 export LASSIE_LIBP2P_CONNECTIONS_LOWWATER=2000
 export LASSIE_LIBP2P_CONNECTIONS_HIGHWATER=3000
 export LASSIE_CONCURRENT_SP_RETRIEVALS=1
 export LASSIE_EXPOSE_METRICS=true
 export LASSIE_METRICS_PORT=7776
 export LASSIE_METRICS_ADDRESS=0.0.0.0
-export LASSIE_SUPPORTED_PROTOCOLS="bitswap"
-
+export LASSIE_SUPPORTED_PROTOCOLS="bitswap,graphsync"
 mkdir -p $LASSIE_TEMP_DIRECTORY
 
 if [ "${LASSIE_ORIGIN:-}" != "" ]; then
