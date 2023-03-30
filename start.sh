@@ -50,6 +50,7 @@ if [ -n "${IPFS_GATEWAY_ORIGIN:-}" ]; then
   sed -i "s@https://ipfs.io;@$IPFS_GATEWAY_ORIGIN;@g" /etc/nginx/conf.d/shared.conf;
 fi
 
+cron
 nginx
 
 export NODE_VERSION_HASH=$(echo -n "$VERSION_HASH$(cat /usr/src/app/shared/nodeId.txt)" | sha256sum | head -c 64)
@@ -59,7 +60,7 @@ export LASSIE_ORIGIN=http://127.0.0.1:$LASSIE_PORT
 export LASSIE_SP_ELIGIBLE_PORTION=0.05
 export LASSIE_EVENT_RECORDER_INSTANCE_ID="$(cat /usr/src/app/shared/nodeId.txt)"
 export LASSIE_TEMP_DIRECTORY=/usr/src/app/shared/lassie
-export LASSIE_MAX_BLOCKS_PER_REQUEST=10
+export LASSIE_MAX_BLOCKS_PER_REQUEST=10000
 export LASSIE_LIBP2P_CONNECTIONS_LOWWATER=2000
 export LASSIE_LIBP2P_CONNECTIONS_HIGHWATER=3000
 export LASSIE_CONCURRENT_SP_RETRIEVALS=1
