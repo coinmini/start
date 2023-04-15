@@ -68,11 +68,15 @@ export LASSIE_EXPOSE_METRICS=true
 export LASSIE_METRICS_PORT=7776
 export LASSIE_METRICS_ADDRESS=0.0.0.0
 export LASSIE_SUPPORTED_PROTOCOLS="bitswap,graphsync"
-export LASSIE_EXCLUDE_PROVIDERS=bafzbeibhqavlasjc7dvbiopygwncnrtvjd2xmryk5laib7zyjor6kf3avm
 mkdir -p $LASSIE_TEMP_DIRECTORY
 
 if [ "${LASSIE_ORIGIN:-}" != "" ]; then
-  lassie daemon &>/dev/null &
+  if [ "${NETWORK:-}" = "main" ]; then
+    lassie daemon &>/dev/null &
+  else
+    lassie daemon &
+  fi
+
   LASSIE_PID=$!
 
   node --max-old-space-size=4096 /usr/src/app/src/bin/shim.js &
